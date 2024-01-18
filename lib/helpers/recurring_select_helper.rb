@@ -7,6 +7,12 @@ module RecurringSelectHelper
     end
   end
 
+  module FormTagHelper
+    def select_recurring_tag(name, default_schedules = nil, options = {}, html_options = {})
+      RecurringSelectTag.new(nil, name, self, default_schedules, options, html_options).render
+    end
+  end
+
   module FormBuilder
     def select_recurring(method, default_schedules = nil, options = {}, html_options = {})
       if !@template.respond_to?(:select_recurring)
@@ -65,7 +71,7 @@ module RecurringSelectHelper
       ar = [rule.to_s, rule.to_hash.to_json]
 
       if custom
-        ar[0] << "*"
+        ar[0] += "*"
         ar << {"data-custom" => true}
       end
 
@@ -90,20 +96,15 @@ module RecurringSelectHelper
     end
   end
 
-  class RecurringSelectTag < ActionView::Helpers::Tags::Base
+  class RecurringSelectTag < ActionView::Helpers::Tags::Select
     include RecurringSelectHelper::FormOptionsHelper
     include SelectHTMLOptions
 
     def initialize(object, method, template_object, default_schedules = nil, options = {}, html_options = {})
       @default_schedules = default_schedules
-      @choices = @choices.to_a if @choices.is_a?(Range)
-      @method_name = method.to_s
-      @object_name = object.to_s
-      @html_options = recurring_select_html_options(html_options)
-      @template_object = template_object
-      add_default_name_and_id(@html_options)
+      html_options = recurring_select_html_options(html_options)
 
-      super(object, method, template_object, options)
+      super(object, method, template_object, @default_schedules, options, html_options)
     end
 
     def render
